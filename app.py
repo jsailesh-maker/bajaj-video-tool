@@ -15,7 +15,6 @@ st.set_page_config(page_title="Pro Bajaj Ad Creator", layout="centered")
 BAJAJ_BLUE = (0, 113, 187)
 WHITE = (255, 255, 255)
 BAJAJ_LOGO_URL = "https://www.bajajfinserv.in/content/dam/bajajfinserv/header-footer/bfl-logo.png"
-# Upbeat Background Music (Using a royalty-free direct link)
 BGM_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
 
 def create_pro_frame(title, body="", is_intro=False):
@@ -23,18 +22,28 @@ def create_pro_frame(title, body="", is_intro=False):
     img = Image.new('RGB', (width, height), color=BAJAJ_BLUE if is_intro else WHITE)
     d = ImageDraw.Draw(img)
     
+    # Attempting to load a professional-looking font
+    try:
+        # Most Linux servers (Streamlit Cloud) have DejaVuSans
+        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 60)
+        font_body = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 40)
+    except:
+        font_title = ImageFont.load_default()
+        font_body = ImageFont.load_default()
+    
     if is_intro:
-        d.rectangle([100, 350, 1180, 355], fill=WHITE) 
-        d.text((100, 280), title.upper(), fill=WHITE)
+        # Centered Intro Design
+        d.rectangle([width/4, height/2 + 10, 3*width/4, height/2 + 15], fill=WHITE) 
+        d.text((width/2, height/2 - 50), title.upper(), fill=WHITE, font=font_title, anchor="mm")
     else:
         # Professional Lower Third
         d.rectangle([0, 520, 1280, 720], fill=BAJAJ_BLUE) 
-        d.text((60, 560), title.upper(), fill=WHITE)
+        d.text((60, 580), title.upper(), fill=WHITE, font=font_title)
         
         y_text = 100
-        lines = textwrap.wrap(body, width=50)
+        lines = textwrap.wrap(body, width=45)
         for line in lines:
-            d.text((80, y_text), line, fill=(40, 40, 40))
+            d.text((80, y_text), line, fill=(40, 40, 40), font=font_body)
             y_text += 60
 
     tfile = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
@@ -44,14 +53,15 @@ def create_pro_frame(title, body="", is_intro=False):
 def generate_video(url_input):
     st.info("🎸 Mixing Audio & Rendering Professional Visuals...")
     
-    scenes = [
+    # We use your energetic script structure
+    scenes_data = [
         {"t": "vivo T4x 5G", "b": "The Power Beast Unleashed", "i": True},
-        {"t": "Massive 6500mAh Battery", "b": "Non-stop Gaming\n44W Flash Charge\nAll-day Power", "i": False},
+        {"t": "6500mAh Massive Battery", "b": "Non-stop Gaming\n44W Flash Charge\nAll-day Power", "i": False},
         {"t": "Next-Gen 5G Speed", "b": "Dimensity 7300 Chipset\n120Hz Smooth Display\n50MP AI Camera", "i": False},
         {"t": "Bajaj Finserv Easy EMI", "b": "3 to 60 Months Tenure\n1.5 Lakh+ Partner Stores\nZero Hidden Charges", "i": True}
     ]
 
-    clips = [create_pro_frame(s['t'], s['b'], s['i']).fadein(0.5) for s in scenes]
+    clips = [create_pro_frame(s['t'], s['b'], s['i']).fadein(0.5) for s in scenes_data]
     final_video = concatenate_videoclips(clips, method="compose")
 
     # 1. Narrator Audio
@@ -61,14 +71,14 @@ def generate_video(url_input):
     tts.save(taudio.name)
     voice_clip = AudioFileClip(taudio.name)
 
-    # 2. Background Music Logic
+    # 2. Background Music with Audio Ducking
     try:
         bgm_data = requests.get(BGM_URL).content
         tbgm = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
         with open(tbgm.name, 'wb') as f:
             f.write(bgm_data)
+        # Ducking music to 10% volume so voice stands out
         bgm_clip = AudioFileClip(tbgm.name).volumex(0.1).set_duration(final_video.duration)
-        # Mix Voice over Music
         final_audio = CompositeAudioClip([voice_clip, bgm_clip])
     except:
         final_audio = voice_clip
@@ -76,16 +86,23 @@ def generate_video(url_input):
     final_video = final_video.set_audio(final_audio)
     
     tvideo = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
-    final_video.write_videofile(tvideo.name, fps=24, codec="libx264")
+    final_video.write_videofile(tvideo.name, fps=24, codec="libx264", audio_codec="aac")
     return tvideo.name
 
 # --- UI ---
 st.image(BAJAJ_LOGO_URL, width=200)
 st.title("🎥 Pro Explainer Generator")
+st.write("Turn any SKU into a professional Bajaj Finserv video ad.")
+
 url = st.text_input("Enter Product URL:")
 
 if st.button("Generate Professional Video"):
     if url:
-        path = generate_video(url)
-        st.success("Professional Video with Audio Mix Ready!")
-        st.video(path)
+        with st.spinner("Rendering High-Quality Video..."):
+            path = generate_video(url)
+            st.success("Professional Video Ready!")
+            st.video(path)
+            
+            # Add a download button for the final file
+            with open(path, "rb") as f:
+                st.download_button("📥 Download Ad Video", data=f, file_name="bajaj_ad.mp4")
