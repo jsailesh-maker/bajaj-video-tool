@@ -1,8 +1,6 @@
 streamlit
-moviepy==1.0.3
-decorator==4.4.2
-Pillow==9.5.0
+moviepy
+Pillow
 gTTS
 requests
-beautifulsoup4
 numpy
