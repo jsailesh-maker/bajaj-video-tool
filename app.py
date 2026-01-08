@@ -7,100 +7,106 @@ from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import tempfile
 
-# --- PRO CONFIG ---
+# --- BRAND CONFIG ---
 BAJAJ_BLUE = (0, 113, 187)
+WHITE = (255, 255, 255)
 BAJAJ_LOGO_URL = "https://www.bajajfinserv.in/content/dam/bajajfinserv/header-footer/bfl-logo.png"
+# Professional Avatar Placeholder (Clean Corporate Look)
+AVATAR_URL = "https://cdn-icons-png.flaticon.com/512/4140/4140037.png" 
 
-def generate_pro_script(title, raw_text):
-    """
-    Simulates an LLM Scriptwriter.
-    Structures: Hook -> Problem/Solution -> Bajaj Call to Action
-    """
-    hook = f"Looking for the best deal on {title}?"
-    # Simple logic to find a USP from the text
-    usp = raw_text[:120].strip() if len(raw_text) > 10 else "this premium product"
-    
-    script = (
-        f"{hook} "
-        f"Experience top-tier quality with {usp}. "
-        f"Don't let the price tag hold you back. "
-        f"Get it now on Bajaj Finserv Easy EMI! "
-        f"Enjoy flexible tenures from 3 to 60 months with zero hidden charges."
-    )
-    return script
-
-def create_pro_frame(text, is_intro=False):
-    """Creates a high-end graphic frame."""
+def create_text_frame(title, bullet_points=None, is_intro=False):
+    """Creates professional motion-graphic style frames."""
     width, height = 1280, 720
-    # Gradient-like background
-    bg_color = BAJAJ_BLUE if is_intro else (255, 255, 255)
-    txt_color = (255, 255, 255) if is_intro else (0, 0, 0)
+    bg = BAJAJ_BLUE if is_intro else WHITE
+    txt_color = WHITE if is_intro else (40, 40, 40)
     
-    img = Image.new('RGB', (width, height), color=bg_color)
+    img = Image.new('RGB', (width, height), color=bg)
     d = ImageDraw.Draw(img)
     
-    # Simple shapes for 'Pro' look
+    # UI Elements
     if not is_intro:
-        d.rectangle([0, 0, 40, 720], fill=BAJAJ_BLUE) # Stylish side bar
+        d.rectangle([0, 0, 1280, 80], fill=BAJAJ_BLUE) # Top Bar
+        d.text((50, 20), "vivo T4x 5G | Exclusive Offer", fill=WHITE)
     
-    # Text Wrapping
-    lines = textwrap.wrap(text, width=40)
-    y_text = 250
-    for line in lines:
-        d.text((100, y_text), line, fill=txt_color)
-        y_text += 40
-        
+    # Title
+    d.text((100, 150), title.upper(), fill=txt_color)
+    
+    # Bullets
+    if bullet_points:
+        y = 250
+        for bp in bullet_points:
+            d.text((120, y), f"• {bp}", fill=txt_color)
+            y += 60
+
     tfile = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
     img.save(tfile.name)
-    return ImageClip(tfile.name).set_duration(5)
+    return ImageClip(tfile.name).set_duration(6)
 
-def generate_video(url):
-    st.info("🧠 AI is analyzing the URL and writing a script...")
+def generate_video(url, product_name="vivo T4x 5G"):
+    st.info(f"🎬 Creating Pro Video for: {url}")
     
-    # 1. Scrape
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    res = requests.get(url, headers=headers)
-    soup = BeautifulSoup(res.content, 'html.parser')
-    title = soup.title.string[:50] if soup.title else "Exclusive Offer"
-    raw_content = " ".join([p.get_text() for p in soup.find_all('p')[:2]])
-    
-    # 2. Scripting
-    pro_script = generate_pro_script(title, raw_content)
-    st.success(f"**AI Script Generated:** {pro_script[:100]}...")
+    # 1. THE SCRIPT (Using your provided text)
+    script_parts = [
+        f"Meet the {product_name} – the ultimate power beast with a massive 6500mAh battery that crushes all-day gaming and streaming!",
+        "Slim yet unbreakable, this beast rocks a MediaTek Dimensity 7300 processor and a stunning 120Hz display with 1050 nits brightness.",
+        "Turbocharged 5G, 8GB RAM, IP64 resistance, and 44W flash charging gets you back in action in minutes!",
+        "Ready to own it? Grab it with Easy EMIs from Bajaj Finserv – flexible tenures from 3 to 60 months, zero financial hassle!"
+    ]
+    full_script = " ".join(script_parts)
 
-    # 3. Audio (The Avatar Voice)
-    tts = gTTS(text=pro_script, lang='en', tld='co.in') # Indian English accent
+    # 2. AUDIO (Narrator)
+    tts = gTTS(text=full_script, lang='en', tld='co.in')
     taudio = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
     tts.save(taudio.name)
     audio_clip = AudioFileClip(taudio.name)
 
-    # 4. Visuals (Avatar Placeholder + Pro Slides)
-    st.info("🎨 Rendering Professional Visuals...")
+    # 3. VISUALS
+    # Scene 1: Intro
+    c1 = create_text_frame(f"{product_name}\nTHE POWER BEAST", is_intro=True)
     
-    # Frame 1: Professional Intro
-    c1 = create_pro_frame(f"OFFER ALERT: \n{title}", is_intro=True)
+    # Scene 2: Specs
+    c2 = create_text_frame("Technical Superiority", 
+                           ["MediaTek Dimensity 7300", "120Hz / 1050 Nits Display", "50MP AI Camera"])
     
-    # Frame 2: The 'Avatar' Placeholder 
-    # (Real avatar generation requires a paid API, so we use a pro visual)
-    c2 = create_pro_frame(f"Why Choose This? \n{raw_content[:80]}...", is_intro=False)
+    # Scene 3: Features
+    c3 = create_text_frame("Built to Last", 
+                           ["6500mAh Massive Battery", "44W Flash Charging", "IP64 Water Resistance"])
     
-    # Frame 3: Bajaj Outro (From previous code)
-    c3 = create_pro_frame("Flexible EMI Options \n3 to 60 Months", is_intro=True)
+    # Scene 4: Bajaj Outro
+    c4 = create_text_frame("Easy EMI Options", 
+                           ["Flexible Tenure: 3-60 Months", "1.5 Lakh+ Partner Stores", "Zero Financial Hassle"], is_intro=True)
+
+    # Combine & Apply Zoom Effect (to feel professional)
+    clips = [c1, c2, c3, c4]
+    final_video = concatenate_videoclips(clips, method="compose")
     
-    # Combine
-    final = concatenate_videoclips([c1, c2, c3], method="compose")
-    final = final.set_audio(audio_clip.set_duration(final.duration))
+    # Finalize
+    final_video = final_video.set_audio(audio_clip.set_duration(final_video.duration))
     
     tvideo = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
-    final.write_videofile(tvideo.name, fps=24, codec="libx264")
+    final_video.write_videofile(tvideo.name, fps=24, codec="libx264")
     return tvideo.name
 
-# --- UI ---
-st.set_page_config(page_title="Pro Bajaj Video Gen")
-st.title("🚀 Pro Ad Generator")
-url_input = st.text_input("Enter Product URL:")
+# --- BATCH UI ---
+st.set_page_config(page_title="Bajaj Pro Video Gen", layout="wide")
+st.image(BAJAJ_LOGO_URL, width=200)
+st.title("🚀 Batch Explainer Video Creator")
 
-if st.button("Generate Pro Video"):
-    if url_input:
-        path = generate_video(url_input)
-        st.video(path)
+st.subheader("1. Enter URLs (One per line)")
+urls_input = st.text_area("Example: https://website.com/vivo-t4x", height=150)
+
+st.subheader("2. Review Script")
+with st.expander("View Script Template"):
+    st.write("The tool will use your 'Power Beast' script for all videos in this batch.")
+
+if st.button("Generate All Videos"):
+    urls = [u.strip() for u in urls_input.split("\n") if u.strip()]
+    if urls:
+        for url in urls:
+            with st.status(f"Processing {url}..."):
+                video_path = generate_video(url)
+                st.video(video_path)
+                with open(video_path, "rb") as file:
+                    st.download_button(f"Download Video for {url[:30]}...", data=file, file_name="bajaj_promo.mp4")
+    else:
+        st.error("Please enter at least one URL.")
