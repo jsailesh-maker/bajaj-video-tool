@@ -1,6 +1,6 @@
 streamlit
-moviepy==1.0.3
-Pillow==9.5.0
+moviepy
 gTTS
 requests
+Pillow
 numpy
